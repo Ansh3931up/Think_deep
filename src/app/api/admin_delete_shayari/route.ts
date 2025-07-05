@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
 import mongoose, { Schema, model, models } from 'mongoose'
-console.log("mongo", process.env.MONGODB_URI);
-// const uri = process.env.MONGODB_URI || ''
+
+// Use environment variable for MongoDB URI
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://thebeliever39:Ehr2HjnUULLoNyuC@cluster0.pn0rjai.mongodb.net/think_deep?retryWrites=true&w=majority&appName=Cluster0"
+
 if (!mongoose.connection.readyState) {
-  mongoose.connect("mongodb+srv://thebeliever39:Ehr2HjnUULLoNyuC@cluster0.pn0rjai.mongodb.net/think_deep?retryWrites=true&w=majority&appName=Cluster0")
+  try {
+    await mongoose.connect(MONGODB_URI)
+    console.log("MongoDB connected successfully")
+  } catch (error) {
+    console.error("MongoDB connection error:", error)
+  }
 }
 
 const ShayariSchema = new Schema({
@@ -20,7 +27,7 @@ const Shayari = models.Shayari || model('Shayari', ShayariSchema)
 export async function POST(req: Request) {
   try {
     const { id, admin } = await req.json()
-    if (!id || !admin || admin !== process.env.ADMIN_EMAIL) {
+    if (!id || !admin || admin !== (process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.ADMIN_EMAIL)) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 403 })
     }
     await Shayari.findByIdAndDelete(id)

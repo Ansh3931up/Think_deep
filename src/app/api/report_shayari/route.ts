@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
-
 import mongoose, { Schema, model, models } from 'mongoose'
 
-// const uri = process.env.MONGODB_URI || ''
+// Use environment variable for MongoDB URI
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://thebeliever39:Ehr2HjnUULLoNyuC@cluster0.pn0rjai.mongodb.net/think_deep?retryWrites=true&w=majority&appName=Cluster0"
+
 if (!mongoose.connection.readyState) {
-  mongoose.connect("mongodb+srv://thebeliever39:Ehr2HjnUULLoNyuC@cluster0.pn0rjai.mongodb.net/think_deep?retryWrites=true&w=majority&appName=Cluster0")
+  try {
+    await mongoose.connect(MONGODB_URI)
+    console.log("MongoDB connected successfully")
+  } catch (error) {
+    console.error("MongoDB connection error:", error)
+  }
 }
 
 const ShayariSchema = new Schema({
