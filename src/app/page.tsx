@@ -99,6 +99,9 @@ export default function ThinkDeepBook() {
   const [showSplash, setShowSplash] = useState(true)
   const splashMinDuration = 2000 // 2 seconds
   const splashStart = useRef(Date.now())
+  const [analytics, setAnalytics] = useState<{ activeUsers: string; pageViews: string } | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
 
   // Google Analytics tracking
   const trackEvent = (eventName: string, parameters?: Record<string, unknown>) => {
@@ -830,6 +833,28 @@ export default function ThinkDeepBook() {
     }
   }, [loading])
 
+  useEffect(() => {
+    if (adminMode) {
+      setAnalyticsLoading(true)
+      setAnalyticsError(null)
+      fetch('/api/analytics')
+        .then(res => res.json())
+        .then(data => {
+          if (data.rows && data.rows.length > 0) {
+            const metrics = data.rows[0].metricValues
+            setAnalytics({
+              activeUsers: metrics[0]?.value || '0',
+              pageViews: metrics[1]?.value || '0',
+            })
+          } else {
+            setAnalytics({ activeUsers: '0', pageViews: '0' })
+          }
+        })
+        .catch(err => setAnalyticsError('Failed to load analytics'))
+        .finally(() => setAnalyticsLoading(false))
+    }
+  }, [adminMode])
+
   if (showSplash) {
   return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-purple-900 animate-fade-in-up">
@@ -1360,6 +1385,23 @@ export default function ThinkDeepBook() {
                   <User className="w-4 h-4" />
                   {adminEmail}
                 </div>
+              </div>
+              {/* Analytics Widget */}
+              <div className="mt-4">
+                {analyticsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading analytics...</div>
+                ) : analyticsError ? (
+                  <div className="text-sm text-red-400">{analyticsError}</div>
+                ) : analytics ? (
+                  <div className="flex gap-6 text-sm text-gray-300">
+                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
+                      <span className="font-semibold">Active Users (7d):</span> {analytics.activeUsers}
+                    </div>
+                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
+                      <span className="font-semibold">Page Views (7d):</span> {analytics.pageViews}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </DialogHeader>
 
