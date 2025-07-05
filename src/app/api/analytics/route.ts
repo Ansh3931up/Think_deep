@@ -23,6 +23,6 @@ export async function GET() {
     });
     return NextResponse.json(response);
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch analytics' }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || 'Failed to fetch analytics' }, { status: 500 });
   }
 } 
