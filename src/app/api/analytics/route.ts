@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { readFileSync } from 'fs';
-import path from 'path';
 
 const analyticsDataClient = new BetaAnalyticsDataClient({
-  credentials: JSON.parse(
-    readFileSync(path.join(process.cwd(), 'symmetric-hash-452501-e7-a6c5547c72e1.json'), 'utf8')
-  ),
+  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!)
 });
 
 const PROPERTY_ID = '11442970912';
