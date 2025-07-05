@@ -99,9 +99,14 @@ export default function ThinkDeepBook() {
   const [showSplash, setShowSplash] = useState(true)
   const splashMinDuration = 2000 // 2 seconds
   const splashStart = useRef(Date.now())
-  const [analytics, setAnalytics] = useState<{ activeUsers: string; pageViews: string } | null>(null)
+  const [analytics, setAnalytics] = useState<{ 
+    activeUsers: string; 
+    pageViews: string; 
+    totalImpressions: string 
+  } | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [propertyId, setPropertyId] = useState<string | null>(null)
 
   // Google Analytics tracking
   const trackEvent = (eventName: string, parameters?: Record<string, unknown>) => {
@@ -840,17 +845,29 @@ export default function ThinkDeepBook() {
       fetch('/api/analytics')
         .then(res => res.json())
         .then(data => {
-          if (data.rows && data.rows.length > 0) {
-            const metrics = data.rows[0].metricValues
+          if (data.week && data.week.length > 0) {
+            const weekMetrics = data.week[0].metricValues
+            const allTimeMetrics = data.allTime?.[0]?.metricValues || []
+            
             setAnalytics({
-              activeUsers: metrics[0]?.value || '0',
-              pageViews: metrics[1]?.value || '0',
+              activeUsers: weekMetrics[0]?.value || '0',
+              pageViews: weekMetrics[1]?.value || '0',
+              totalImpressions: allTimeMetrics[0]?.value || '0',
             })
           } else {
-            setAnalytics({ activeUsers: '0', pageViews: '0' })
+            setAnalytics({ 
+              activeUsers: '0', 
+              pageViews: '0', 
+              totalImpressions: '0' 
+            })
           }
+          // Set property ID from API response or fallback to env variable
+          setPropertyId(data.propertyId || process.env.NEXT_PUBLIC_GA4_PROPERTY_ID || 'Not configured')
         })
-        .catch(err => setAnalyticsError('Failed to load analytics'))
+        .catch(err => {
+          setAnalyticsError('Failed to load analytics')
+          setPropertyId(process.env.NEXT_PUBLIC_GA4_PROPERTY_ID || 'Not configured')
+        })
         .finally(() => setAnalyticsLoading(false))
     }
   }, [adminMode])
@@ -1393,15 +1410,42 @@ export default function ThinkDeepBook() {
                 ) : analyticsError ? (
                   <div className="text-sm text-red-400">{analyticsError}</div>
                 ) : analytics ? (
-                  <div className="flex gap-6 text-sm text-gray-300">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
-                      <span className="font-semibold">Active Users (7d):</span> {analytics.activeUsers}
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-green-400 text-xs">Active Users</span>
+                        <span className="text-gray-300 text-sm">7 days: {analytics.activeUsers}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
-                      <span className="font-semibold">Page Views (7d):</span> {analytics.pageViews}
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-blue-400 text-xs">Page Views</span>
+                        <span className="text-gray-300 text-sm">7 days: {analytics.pageViews}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-amber-400 text-xs">Total Impressions</span>
+                        <span className="text-gray-300 text-sm">All time: {analytics.totalImpressions}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-purple-400 text-xs">GA4 Property ID</span>
+                        <span className="text-gray-300 font-mono text-xs">{propertyId}</span>
+                      </div>
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span>Analytics not available</span>
+                  </div>
+                )}
               </div>
             </DialogHeader>
 
