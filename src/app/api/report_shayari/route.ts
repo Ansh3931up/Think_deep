@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-// @ts-expect-error: If mongoose types are missing
+
 import mongoose, { Schema, model, models } from 'mongoose'
 
 // const uri = process.env.MONGODB_URI || ''
