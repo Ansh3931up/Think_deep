@@ -42,8 +42,7 @@ import {
   CheckCircle,
   User,
   Globe,
-  Shield,
-  Settings,
+ 
   Pen
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -56,7 +55,7 @@ declare global {
 }
 
 interface Shayari {
-  id: string
+  _id: string
   text: string
   language: "hindi" | "english"
   author?: string
@@ -286,7 +285,7 @@ export default function ThinkDeepBook() {
   }
 
   const likeShayari = (shayariId: string) => {
-    setShayaris((prev) => prev.map((s) => (s.id === shayariId ? { ...s, likes: s.likes + 1 } : s)))
+    setShayaris((prev) => prev.map((s) => (s._id === shayariId ? { ...s, likes: s.likes + 1 } : s)))
     trackEvent("shayari_liked", { shayari_id: shayariId })
   }
 
@@ -405,7 +404,7 @@ export default function ThinkDeepBook() {
   const handleShare = async (shayari: Shayari) => {
     setSelectedShayari(shayari)
     setShareDialogOpen(true)
-    trackEvent("share_dialog_opened", { shayari_id: shayari.id })
+    trackEvent("share_dialog_opened", { shayari_id: shayari._id })
   }
 
   const shareAsImage = async (platform: string) => {
@@ -415,12 +414,12 @@ export default function ThinkDeepBook() {
 
     if (imageData) {
       const link = document.createElement("a")
-      link.download = `think_deep_shayari_${selectedShayari.id}.png`
+      link.download = `think_deep_shayari_${selectedShayari._id}.png`
       link.href = imageData
 
       if (platform === "download") {
         link.click()
-        trackEvent("image_downloaded", { shayari_id: selectedShayari.id })
+        trackEvent("image_downloaded", { shayari_id: selectedShayari._id })
         return
       }
 
@@ -437,18 +436,32 @@ export default function ThinkDeepBook() {
         }
 
         // For text-based sharing platforms, prepare share text with URL
-        const shareText = `"${selectedShayari.text}" - ${selectedShayari.author}\n\nDiscover more poetry at: 🌐 think-deep.vercel.app`
+        const shareText = `"${selectedShayari.text}" - ${selectedShayari.author}\n\nDiscover more poetry at: 🌐 think-deep-lovat.vercel.app`
 
         // Update the URLs object to include share text where applicable
         const urls = {
           instagram: "https://www.instagram.com/",
-          facebook: `https://www.facebook.com/sharer/sharer.php?u=https://think-deep.vercel.app&quote=${encodeURIComponent(shareText)}`,
-          twitter: `https://twitter.com/compose/tweet?text=${encodeURIComponent(shareText)}&url=https://think-deep.vercel.app`,
+          instagram_story: "instagram-stories://share",
+          instagram_feed: "instagram://library?AssetPickerSourceType=Library&AssetPickerMediaType=Photos",
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=https://think-deep-lovat.vercel.app&quote=${encodeURIComponent(shareText)}`,
+          twitter: `https://twitter.com/compose/tweet?text=${encodeURIComponent(shareText)}&url=https://think-deep-lovat.vercel.app`,
           whatsapp: `https://web.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,
         }
 
-        window.open(urls[platform as keyof typeof urls], "_blank")
-        trackEvent("shared_to_platform", { platform, shayari_id: selectedShayari.id })
+        // Handle Instagram deep links for mobile apps
+        if (platform === "instagram_story" || platform === "instagram_feed") {
+          // Try to open Instagram app first
+          const instagramUrl = urls[platform as keyof typeof urls]
+          window.location.href = instagramUrl
+          
+          // Fallback to web Instagram after a short delay
+          setTimeout(() => {
+            window.open("https://www.instagram.com/", "_blank")
+          }, 1000)
+        } else {
+          window.open(urls[platform as keyof typeof urls], "_blank")
+        }
+        trackEvent("shared_to_platform", { platform, shayari_id: selectedShayari._id })
       } catch (error) {
         console.error("Error sharing image:", error)
         link.click()
@@ -461,7 +474,7 @@ export default function ThinkDeepBook() {
       const shareText = `"${selectedShayari.text}" - ${selectedShayari.author}\n\n🌐 Discover more at: think-deep.vercel.app`
       navigator.clipboard.writeText(shareText)
       alert("Text copied to clipboard!")
-      trackEvent("text_copied", { shayari_id: selectedShayari.id })
+      trackEvent("text_copied", { shayari_id: selectedShayari._id })
     }
   }
 
@@ -558,7 +571,7 @@ export default function ThinkDeepBook() {
     // Dark Shayari Pages with Enhanced Animations
     ...shayaris.filter(s => !s.hidden).map((shayari, index) => (
       <div
-        key={`shayari-page-${shayari.id}`}
+        key={`shayari-page-${shayari._id}`}
         className="h-full flex flex-col p-8 relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black cursor-pointer"
         onClick={handlePageClick}
         onMouseEnter={() => setShowClickHints(true)}
@@ -619,7 +632,7 @@ export default function ThinkDeepBook() {
                     className="text-gray-400 hover:text-red-400 h-8 w-8 p-0 transition-all duration-300 hover:scale-125 animate-bounce-in delay-600"
                     onClick={(e) => {
                       e.stopPropagation()
-                      likeShayari(shayari.id)
+                      likeShayari(shayari._id)
                     }}
                   >
                     <Heart className="w-4 h-4" />
@@ -629,13 +642,13 @@ export default function ThinkDeepBook() {
                     variant="ghost"
                     size="sm"
                     className={`h-8 w-8 p-0 transition-all duration-300 hover:scale-125 animate-bounce-in delay-700 ${
-                      bookmarkedShayaris.has(shayari.id)
+                      bookmarkedShayaris.has(shayari._id)
                         ? "text-amber-400 hover:text-amber-300"
                         : "text-gray-400 hover:text-amber-400"
                     }`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      toggleBookmark(shayari.id)
+                      toggleBookmark(shayari._id)
                     }}
                   >
                     <Bookmark className="w-4 h-4" />
@@ -671,7 +684,7 @@ export default function ThinkDeepBook() {
                         const res = await fetch('/api/report_shayari', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ id: shayari.id || shayari.id, email })
+                          body: JSON.stringify({ id: shayari._id || shayari._id, email })
                         })
                         if (!res.ok) throw new Error('Failed to report')
                         alert('Reported successfully. If enough users report, this shayari will be hidden.')
@@ -1258,6 +1271,22 @@ export default function ThinkDeepBook() {
                   </Button>
 
                   <Button
+                    onClick={() => shareAsImage("instagram_story")}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white transition-all duration-300 hover:scale-105"
+                  >
+                    <Instagram className="w-4 h-4" />
+                    Instagram Story
+                  </Button>
+
+                  <Button
+                    onClick={() => shareAsImage("instagram_feed")}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white transition-all duration-300 hover:scale-105"
+                  >
+                    <Instagram className="w-4 h-4" />
+                    Instagram Feed
+                  </Button>
+
+                  <Button
                     onClick={() => shareAsImage("facebook")}
                     className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 hover:scale-105"
                   >
@@ -1417,7 +1446,7 @@ export default function ThinkDeepBook() {
                 </div>
               ) : (
                 filteredAdminShayaris.map((shayari) => (
-                  <div key={shayari.id || shayari.id} className="bg-gray-800 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
+                  <div key={shayari._id || shayari._id} className="bg-gray-800 rounded-lg border border-gray-700 p-4 hover:border-gray-600 transition-colors">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="text-lg text-white mb-3 leading-relaxed">
@@ -1451,11 +1480,11 @@ export default function ThinkDeepBook() {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => handleAdminAction("unhide", shayari.id || shayari.id)}
-                            disabled={adminActionLoading === (shayari.id || shayari.id)}
+                            onClick={() => handleAdminAction("unhide", shayari._id || shayari._id)}
+                            disabled={adminActionLoading === (shayari._id || shayari._id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            {adminActionLoading === (shayari.id || shayari.id) ? (
+                            {adminActionLoading === (shayari._id || shayari._id) ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               <Eye className="w-3 h-3" />
@@ -1465,10 +1494,10 @@ export default function ThinkDeepBook() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => setDeleteConfirmId(shayari.id || shayari.id)}
-                            disabled={adminActionLoading === (shayari.id || shayari.id)}
+                            onClick={() => setDeleteConfirmId(shayari._id || shayari._id)}
+                            disabled={adminActionLoading === (shayari._id || shayari._id)}
                           >
-                            {adminActionLoading === (shayari.id || shayari.id) ? (
+                            {adminActionLoading === (shayari._id || shayari._id) ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               <Trash2 className="w-3 h-3" />
