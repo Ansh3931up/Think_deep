@@ -29,6 +29,6 @@ export async function GET(req: Request) {
     const english = allShayari.filter((s: any) => s.language === 'english')
     return NextResponse.json({ hindi, english })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch shayari.' }, { status: 500 })
+    return NextResponse.json({ error: error }, { status: 500 })
   }
 }

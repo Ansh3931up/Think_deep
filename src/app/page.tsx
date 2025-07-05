@@ -671,7 +671,7 @@ export default function ThinkDeepBook() {
                         const res = await fetch('/api/report_shayari', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ id: shayari.id || shayari.id, email })
+                          body: JSON.stringify({ id: shayari._id || shayari.id, email })
                         })
                         if (!res.ok) throw new Error('Failed to report')
                         alert('Reported successfully. If enough users report, this shayari will be hidden.')
@@ -1434,7 +1434,7 @@ export default function ThinkDeepBook() {
                           </div>
                           <div className="flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" />
-                            {(shayari as any).reports?.length || 0} reports
+                            {(shayari as any).reportsCount || 0} reports
                           </div>
                           <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                             shayari.hidden 
@@ -1451,11 +1451,11 @@ export default function ThinkDeepBook() {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => handleAdminAction("unhide", shayari.id)}
-                            disabled={adminActionLoading === shayari.id}
+                            onClick={() => handleAdminAction("unhide", shayari.id || shayari.id)}
+                            disabled={adminActionLoading === (shayari.id || shayari.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            {adminActionLoading === shayari.id ? (
+                            {adminActionLoading === (shayari.id || shayari.id) ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               <Eye className="w-3 h-3" />
@@ -1465,10 +1465,10 @@ export default function ThinkDeepBook() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => setDeleteConfirmId(shayari.id)}
-                            disabled={adminActionLoading === shayari.id}
+                            onClick={() => setDeleteConfirmId(shayari._id || shayari.id)}
+                            disabled={adminActionLoading === (shayari._id || shayari.id)}
                           >
-                            {adminActionLoading === shayari.id ? (
+                            {adminActionLoading === (shayari._id || shayari.id) ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               <Trash2 className="w-3 h-3" />
