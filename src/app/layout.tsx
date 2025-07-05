@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Playfair_Display, Noto_Sans_Devanagari, Poppins, Merriweather } from "next/font/google"
 import "./globals.css"
-// import { GoogleAnalytics } from "../components/google-analytics"
+import { GoogleAnalytics } from "../components/google-analytics"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -69,7 +69,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} ${notoSans.variable} ${poppins.variable} ${merriweather.variable} font-sans bg-black`}>
         <Suspense fallback={null}>
           {children}
-          {/* <GoogleAnalytics /> */}
+          <GoogleAnalytics GA_MEASUREMENT_ID={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-5JG7TTZBCR"} />
         </Suspense>
       </body>
     </html>
