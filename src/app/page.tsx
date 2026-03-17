@@ -107,6 +107,7 @@ export default function ThinkDeepBook() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   // Google Analytics tracking
   const trackEvent = (eventName: string, parameters?: Record<string, unknown>) => {
@@ -126,6 +127,18 @@ export default function ThinkDeepBook() {
     checkMobile()
     window.addEventListener("resize", checkMobile)
     return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Generate or load anonymous user id for like tracking
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const KEY = "think_deep_user_id"
+    let id = window.localStorage.getItem(KEY)
+    if (!id) {
+      id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      window.localStorage.setItem(KEY, id)
+    }
+    setUserId(id)
   }, [])
 
   // Mock API calls - Replace with your actual API
@@ -292,8 +305,38 @@ export default function ThinkDeepBook() {
     setBookmarkedShayaris(newBookmarks)
   }
 
-  const likeShayari = (shayariId: string) => {
-    setShayaris((prev) => prev.map((s) => (s._id === shayariId ? { ...s, likes: s.likes + 1 } : s)))
+  const likeShayari = async (shayariId: string) => {
+    if (!userId) return
+
+    // Optimistic UI update
+    setShayaris((prev) =>
+      prev.map((s) =>
+        s._id === shayariId
+          ? { ...s, likes: (typeof s.likes === "number" && !isNaN(s.likes) ? s.likes : 0) + 1 }
+          : s
+      )
+    )
+
+    try {
+      const res = await fetch("/api/like_shayari", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: shayariId, userId }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (typeof data.likes === "number") {
+          setShayaris((prev) =>
+            prev.map((s) =>
+              s._id === shayariId ? { ...s, likes: data.likes } : s
+            )
+          )
+        }
+      }
+    } catch (e) {
+      // On failure, no rollback for now; next fetch will correct it
+    }
+
     trackEvent("shayari_liked", { shayari_id: shayariId })
   }
 

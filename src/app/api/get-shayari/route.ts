@@ -20,6 +20,8 @@ const ShayariSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
   reports: { type: [String], default: [] }, // user emails
   hidden: { type: Boolean, default: false },
+  likes: { type: Number, default: 0 },
+  likedBy: { type: [String], default: [] }, // anonymous/user identifiers
 })
 
 const Shayari = models.Shayari || model('Shayari', ShayariSchema)

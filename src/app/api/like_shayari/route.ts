@@ -18,7 +18,7 @@ const ShayariSchema = new Schema({
   language: { type: String, enum: ['hindi', 'english'], required: true },
   author: { type: String, default: 'Anonymous' },
   createdAt: { type: Date, default: Date.now },
-  reports: { type: [String], default: [] },
+  reports: { type: [String], default: [] }, // user emails
   hidden: { type: Boolean, default: false },
   likes: { type: Number, default: 0 },
   likedBy: { type: [String], default: [] }, // anonymous/user identifiers
@@ -28,23 +28,35 @@ const Shayari = models.Shayari || model('Shayari', ShayariSchema)
 
 export async function POST(req: Request) {
   try {
-    const { id, email } = await req.json()
-    if (!id || !email) {
+    const { id, userId } = await req.json()
+
+    if (!id || !userId) {
       return NextResponse.json({ error: 'Invalid input.' }, { status: 400 })
     }
+
     const shayari = await Shayari.findById(id)
     if (!shayari) {
       return NextResponse.json({ error: 'Shayari not found.' }, { status: 404 })
     }
-    if (!shayari.reports.includes(email)) {
-      shayari.reports.push(email)
+
+    // Ensure fields exist
+    if (typeof shayari.likes !== 'number' || isNaN(shayari.likes)) {
+      shayari.likes = 0
     }
-    if (shayari.reports.length > 5) {
-      shayari.hidden = true
+    if (!Array.isArray(shayari.likedBy)) {
+      shayari.likedBy = []
     }
-    await shayari.save()
-    return NextResponse.json(shayari)
+
+    // Only allow one like per userId
+    if (!shayari.likedBy.includes(userId)) {
+      shayari.likes += 1
+      shayari.likedBy.push(userId)
+      await shayari.save()
+    }
+
+    return NextResponse.json({ likes: shayari.likes })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to report shayari.' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to like shayari.' }, { status: 500 })
   }
-} 
+}
+
